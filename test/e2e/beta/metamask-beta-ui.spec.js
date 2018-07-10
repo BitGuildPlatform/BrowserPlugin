@@ -1,7 +1,6 @@
 const path = require('path')
 const assert = require('assert')
-const webdriver = require('selenium-webdriver')
-const { By, Key, until } = webdriver
+const {By, Key, until} = require('selenium-webdriver')
 const {
   delay,
   buildChromeWebDriver,
@@ -38,7 +37,7 @@ describe('MetaMask', function () {
         const extPath = path.resolve('dist/chrome')
         driver = buildChromeWebDriver(extPath)
         extensionId = await getExtensionIdChrome(driver)
-        await driver.get(`chrome-extension://${extensionId}/popup.html`)
+        await driver.get(`chrome-extension://${extensionId}/home.html`)
         break
       }
       case 'firefox': {
@@ -47,7 +46,7 @@ describe('MetaMask', function () {
         await installWebExt(driver, extPath)
         await delay(700)
         extensionId = await getExtensionIdFirefox(driver)
-        await driver.get(`moz-extension://${extensionId}/popup.html`)
+        await driver.get(`moz-extension://${extensionId}/home.html`)
       }
     }
   })
@@ -71,37 +70,9 @@ describe('MetaMask', function () {
   })
 
   describe('New UI setup', async function () {
-    let networkSelector
-    it('switches to first tab', async function () {
-      const [firstTab] = await driver.getAllWindowHandles()
-      await driver.switchTo().window(firstTab)
-      await delay(regularDelayMs)
-      try {
-        networkSelector = await findElement(driver, By.css('#network_component'))
-      } catch (e) {
-        await loadExtension(driver, extensionId)
-      }
-      await delay(regularDelayMs)
-    })
-
-    it('use the local network', async function () {
-      await networkSelector.click()
-      await delay(regularDelayMs)
-
-      const localhost = await findElement(driver, By.xpath(`//li[contains(text(), 'Localhost')]`))
-      await localhost.click()
-      await delay(regularDelayMs)
-    })
-
-    it('selects the new UI option', async () => {
-      const button = await findElement(driver, By.xpath("//p[contains(text(), 'Try Beta Version')]"))
-      await button.click()
-      await delay(regularDelayMs)
-
+    it('switches to first tab', async () => {
       // Close all other tabs
-      const [oldUi, tab1, tab2] = await driver.getAllWindowHandles()
-      await driver.switchTo().window(oldUi)
-      await driver.close()
+      const [tab1, tab2] = await driver.getAllWindowHandles()
 
       await driver.switchTo().window(tab1)
       const tab1Url = await driver.getCurrentUrl()
@@ -114,8 +85,11 @@ describe('MetaMask', function () {
         await driver.close()
         await driver.switchTo().window(tab1)
       }
-      await delay(regularDelayMs)
 
+      await delay(regularDelayMs)
+    })
+
+    it('selects the new UI option', async () => {
       const continueBtn = await findElement(driver, By.css('.welcome-screen__button'))
       await continueBtn.click()
       await delay(regularDelayMs)
@@ -270,6 +244,19 @@ describe('MetaMask', function () {
       const closeModal = await findElement(driver, By.css('.page-container__header-close'))
       await closeModal.click()
       await driver.wait(until.stalenessOf(buyModal))
+      await delay(regularDelayMs)
+    })
+  })
+
+  describe('Setup network', () => {
+    it('use the local network', async function () {
+      const networkSelector = await findElement(driver, By.css('.network-component'))
+
+      await networkSelector.click()
+      await delay(regularDelayMs)
+
+      const localhost = await findElement(driver, By.xpath(`//span[contains(text(), 'Localhost 8545')]`))
+      await localhost.click()
       await delay(regularDelayMs)
     })
   })
@@ -709,7 +696,7 @@ describe('MetaMask', function () {
   describe('Send a custom token from TokenFactory', () => {
     let gasModal
     it('sends an already created token', async () => {
-     openNewPage(driver, `https://tokenfactory.surge.sh/#/token/${tokenAddress}`)
+      openNewPage(driver, `https://tokenfactory.surge.sh/#/token/${tokenAddress}`)
 
       const [extension] = await driver.getAllWindowHandles()
 
@@ -725,7 +712,7 @@ describe('MetaMask', function () {
       await transferAmountButton.click()
       await delay(regularDelayMs)
 
-      const [,, popup] = await driver.getAllWindowHandles()
+      const [, , popup] = await driver.getAllWindowHandles()
       await driver.switchTo().window(popup)
       await driver.close()
       await driver.switchTo().window(extension)

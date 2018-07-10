@@ -4,19 +4,11 @@ const connect = require('react-redux').connect
 const h = require('react-hyperscript')
 const { HashRouter } = require('react-router-dom')
 const App = require('./app')
-const OldApp = require('../../old-ui/app/app')
-const { autoAddToBetaUI } = require('./selectors')
 const { setFeatureFlag } = require('./actions')
 const I18nProvider = require('./i18n-provider')
 
 function mapStateToProps (state) {
-  return {
-    betaUI: state.metamask.featureFlags.betaUI,
-    autoAdd: autoAddToBetaUI(state),
-    isUnlocked: state.metamask.isUnlocked,
-    isMascara: state.metamask.isMascara,
-    firstTime: Object.keys(state.metamask.identities).length === 0,
-  }
+  return {}
 }
 
 function mapDispatchToProps (dispatch) {
@@ -37,36 +29,17 @@ function SelectedApp () {
 }
 
 SelectedApp.prototype.componentWillReceiveProps = function (nextProps) {
-  // Code commented out until we begin auto adding users to NewUI
   const {
-    // isUnlocked,
-    // setFeatureFlagWithModal,
     setFeatureFlagWithoutModal,
-    isMascara,
-    // firstTime,
   } = this.props
 
-  // if (isMascara || firstTime) {
-  if (isMascara) {
-    setFeatureFlagWithoutModal()
-  }
-  // } else if (!isUnlocked && nextProps.isUnlocked && (nextProps.autoAdd)) {
-  //   setFeatureFlagWithModal()
-  // }
+  setFeatureFlagWithoutModal()
 }
 
 SelectedApp.prototype.render = function () {
-  // Code commented out until we begin auto adding users to NewUI
-  // const { betaUI, isMascara, firstTime } = this.props
-  // const Selected = betaUI || isMascara || firstTime ? App : OldApp
-
-  const { betaUI, isMascara } = this.props
-
-  return betaUI || isMascara
-  ? h(HashRouter, {
+  return h(HashRouter, {
       hashType: 'noslash',
     }, [
       h(I18nProvider, [ h(App) ]),
     ])
-  : h(OldApp)
 }
